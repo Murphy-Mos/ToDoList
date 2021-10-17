@@ -9,6 +9,8 @@ import UIKit
 
 protocol ToDoListViewInput: AnyObject {
     func updateView(with viewModel: ToDoListViewModel)
+    func reloadScreen()
+    func showError()
 }
 
 final class ToDoListVC: UIViewController {
@@ -24,20 +26,20 @@ final class ToDoListVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableViewManager?.setup(tableView: tableView)
-        presenter?.viewIsReady()
+        
+        reloadTableView()
         setupView()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        tableViewManager?.setup(tableView: tableView)
-        presenter?.viewIsReady()
-    }
     //MARK: - Methods
     
     private func setupView() {
         navigationController?.viewControllers = [self]
+    }
+    
+    private func reloadTableView() {
+        tableViewManager?.setup(tableView: tableView)
+        presenter?.viewIsReady()
     }
     
     //MARK: - IBActions
@@ -53,5 +55,13 @@ extension ToDoListVC: ToDoListViewInput {
     func updateView(with viewModel: ToDoListViewModel) {
         tableView.isHidden = false
         tableViewManager?.update(with: viewModel)
+    }
+    
+    func reloadScreen() {
+        reloadTableView()
+    }
+    
+    func showError() {
+        showOneActionAlert(title: "Ошибка", message: "Произошла неизвестная ошибка", buttonText: "Ok")
     }
 }

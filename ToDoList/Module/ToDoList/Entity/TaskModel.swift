@@ -7,23 +7,14 @@
 
 import Foundation
 import RealmSwift
+import UIKit
 
-struct TaskModel2 {
-    let id: Int
-    let title: String
-    let description: String
-    let dateCreated: Int
-    let image: String?
-    var isCompleted: Bool
-}
-
-@objcMembers
 class TaskModel: Object {
-//    dynamic var id: Int = 0
-    dynamic var title: String = String()
-    dynamic var taskDescription: String = String()
-    dynamic var dateCreated: Date = Date()
-    dynamic var image: String? = nil
-    dynamic var isCompleted: Bool = false
-    dynamic var completionDate: Date? = Date()
+    @objc dynamic var title: String = String()
+    @objc dynamic var taskDescription: String = String()
+    @objc dynamic var dateCreated: Date = Date()
+    @objc dynamic var image: String? = nil
+    @objc dynamic var isCompleted: Bool = false
+    @objc dynamic var completionDate: Date? = Date()
+    var uiImage: UIImage?
 }

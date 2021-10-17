@@ -9,8 +9,8 @@ import UIKit
 
 protocol ToDoListRouterInput {
     
-    func openDetailTask(task: TaskModel)
-    func openNewTask()
+    func openDetailTask(task: TaskModel, delegate: ToDoListDelegate)
+    func openNewTask(delegate: ToDoListDelegate)
 }
 
 final class ToDoListRouter {
@@ -30,13 +30,13 @@ final class ToDoListRouter {
 
 extension ToDoListRouter: ToDoListRouterInput {
     
-    func openDetailTask(task: TaskModel) {
-        let vc = TaskDetailAssembly.assembleModule(task: task)
+    func openDetailTask(task: TaskModel, delegate: ToDoListDelegate) {
+        let vc = TaskDetailAssembly.assembleModule(task: task, delegate: delegate)
         view.navigationController?.pushViewController(vc, animated: true)
     }
     
-    func openNewTask() {
-        let vc = TaskDetailAssembly.assembleModule(task: nil)
+    func openNewTask(delegate: ToDoListDelegate) {
+        let vc = TaskDetailAssembly.assembleModule(task: nil, delegate: delegate)
         view.navigationController?.pushViewController(vc, animated: true)
     }
 }

@@ -27,6 +27,8 @@ extension TaskDetailInteractor: TaskDetailInteractorInput {
         service.save(object: task) { [weak self] isSuccess in
             if isSuccess {
                 self?.presenter?.didSuccessSaveTask()
+            } else {
+                self?.presenter?.didFailureCallToService()
             }
         }
     }
@@ -35,6 +37,8 @@ extension TaskDetailInteractor: TaskDetailInteractorInput {
         service.update(object: task, title: title, description: description, image: image) { [weak self] isSuccess in
             if isSuccess {
                 self?.presenter?.didSuccessSaveTask()
+            } else {
+                self?.presenter?.didFailureCallToService()
             }
         }
     }

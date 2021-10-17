@@ -28,8 +28,8 @@ extension AuthPresenter: AuthViewOutput {
     
     func loginDidTap(login: String, password: String) {
         
-        guard login != profileLogin,
-              password != profilepassword else {
+        guard login == profileLogin,
+              password == profilepassword else {
                   view?.showError()
                   return
               }

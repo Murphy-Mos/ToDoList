@@ -9,15 +9,15 @@ import UIKit
 
 protocol TaskDetailViewInput: AnyObject {
     func popToRootVC()
-    func setTaskImage(image: UIImage)
+    func setTaskImage(image: UIImage?)
+    func showError()
 }
 
-final class TaskDetailVC: UIViewController {
+final class TaskDetailVC: UIViewController, UITextViewDelegate {
     
     // MARK: - Properties
     
     var presenter: TaskDetailViewOutput?
-    var taskInfo: TaskModel?
     
     private let descriptionPlaceHolder = "Описание задачи"
     
@@ -25,7 +25,7 @@ final class TaskDetailVC: UIViewController {
     
     @IBOutlet private weak var taskImage: UIImageView!
     @IBOutlet private weak var taskTitleTextField: UITextField!
-    @IBOutlet private weak var taskDescriptionTextView: UITextView!
+    @IBOutlet private weak var taskDescriptionTextView: TextViewPlaceHolder!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,22 +38,27 @@ final class TaskDetailVC: UIViewController {
     
     @IBAction func saveButtonDidTap(_ sender: Any) {
         guard let title = taskTitleTextField.text,
-              !title.isEmpty else { return }
+              !title.isEmpty else {
+                  showErrorAlert()
+                  return
+              }
+        
         let description = taskDescriptionTextView.text != descriptionPlaceHolder ? taskDescriptionTextView.text : nil
-        presenter?.saveButtonDidTap(taskInfo: taskInfo, title: title, description: description)
+        presenter?.saveButtonDidTap(title: title, description: description)
     }
     
     private func setupView() {
-        taskDescriptionTextView.delegate = self
+        taskDescriptionTextView.placeHolder = descriptionPlaceHolder
         
-        if let taskInfo = taskInfo {
+        if let taskInfo = presenter?.fetchTask() {
             taskTitleTextField.text = taskInfo.title
             taskDescriptionTextView.text = taskInfo.taskDescription
             
-            if taskInfo.image == nil {
-                taskImage.isHidden = true
-            } else {
+            if let image = presenter?.fetchTaskImage() {
                 taskImage.isHidden = false
+                taskImage.image = image
+            } else {
+                taskImage.isHidden = true
             }
             
             if taskInfo.taskDescription != "" {
@@ -64,7 +69,13 @@ final class TaskDetailVC: UIViewController {
         } else {
             taskImage.isHidden = true
         }
-        
+    }
+    
+    private func showErrorAlert() {
+        let errorAlert = UIAlertController(title: "Ошибка", message: "Введите название задачи", preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "Ok", style: .cancel)
+        errorAlert.addAction(okAction)
+        present(errorAlert, animated: true)
     }
 }
 
@@ -76,56 +87,17 @@ extension TaskDetailVC: TaskDetailViewInput {
         navigationController?.popToRootViewController(animated: true)
     }
     
-    func setTaskImage(image: UIImage) {
-        taskImage.image = image
-    }
-}
-
-
-// MARK: - UITextViewDelegate
-extension TaskDetailVC: UITextViewDelegate {
-    
-    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-
-        let currentText:String = textView.text
-        let updatedText = (currentText as NSString).replacingCharacters(in: range, with: text)
-
-        if updatedText.isEmpty {
-
-            textView.text = descriptionPlaceHolder
-            textView.textColor = UIColor.lightGray
-            textView.selectedTextRange = textView.textRange(from: textView.beginningOfDocument, to: textView.beginningOfDocument)
-        }
-
-         else if textView.text == descriptionPlaceHolder && !text.isEmpty {
-            textView.textColor = UIColor.black
-            textView.text = text
+    func setTaskImage(image: UIImage?) {
+        if let image = image {
+            taskImage.isHidden = false
+            taskImage.image = image
         } else {
-            return true
-        }
-
-        return false
-    }
-    
-    func textViewDidChangeSelection(_ textView: UITextView) {
-        if self.view.window != nil {
-            if textView.text == descriptionPlaceHolder {
-                textView.selectedTextRange = textView.textRange(from: textView.beginningOfDocument, to: textView.beginningOfDocument)
-            }
+            taskImage.isHidden = true
+            taskImage.image = nil
         }
     }
     
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.text == descriptionPlaceHolder {
-            textView.text = nil
-            textView.textColor = UIColor.black
-        }
-    }
-    
-    func textViewDidEndEditing(_ textView: UITextView) {
-        if textView.text.isEmpty {
-            textView.text = descriptionPlaceHolder
-            textView.textColor = UIColor.lightGray
-        }
+    func showError() {
+        showOneActionAlert(title: "Ошибка", message: "Произошла неизвестная ошибка", buttonText: "Ok")
     }
 }

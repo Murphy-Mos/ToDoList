@@ -10,20 +10,16 @@ import UIKit
 final class ChangeImagePopupVC: UIViewController {
     
     var delegate: ChangeImagePopupDelegate?
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        
-    }
+    var imageInteractionService: ImageInteractionService?
     
     //MARK: - IBActions
     
     @IBAction private func changeImageDidTap(_ sender: Any) {
-        showImageAlert()
+        showImagePicker()
     }
     
     @IBAction func removeImageDidTap(_ sender: Any) {
+        delegate?.removeImage()
         dismiss(animated: true)
     }
     
@@ -31,34 +27,13 @@ final class ChangeImagePopupVC: UIViewController {
         dismiss(animated: true)
     }
     
-    private func showImageAlert() {
+    private func showImagePicker() {
         
         let picker = UIImagePickerController()
         picker.allowsEditing = false
         picker.delegate = self
-        
-        let alert = UIAlertController(title: "Добавить фото 👇",
-                                      message: "Выбери источник",
-                                      preferredStyle: .alert)
-        
-        let cameraAction = UIAlertAction(title: "Фото",
-                                         style: .default) { action in
-            picker.sourceType = .camera
-            self.present(picker,
-                         animated: true)
-        }
-        
-        let lybraryAction = UIAlertAction(title: "Галерея",
-                                         style: .default) { action in
-            picker.sourceType = .photoLibrary
-            self.present(picker,
-                         animated: true)
-        }
-        
-        alert.addAction(cameraAction)
-        alert.addAction(lybraryAction)
-        
-        present(alert,
+        picker.sourceType = .photoLibrary
+        present(picker,
                 animated: true,
                 completion: nil)
     }
@@ -70,25 +45,20 @@ extension ChangeImagePopupVC: UIImagePickerControllerDelegate, UINavigationContr
 
     func imagePickerController(_ picker: UIImagePickerController,
                                didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-
+        
         if let pickedImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
             
-            if let imageData = pickedImage.pngData() {
-                guard let directory = try? FileManager.default.url(for: .documentDirectory,
-                                                                   in: .userDomainMask,
-                                                                   appropriateFor: nil,
-                                                                   create: false) as NSURL else { return }
-                do {
-                    let newUrl = ImageUserDefaults.shared.generateNewURLPath()
-                    try imageData.write(to: directory.appendingPathComponent(newUrl)!)
-                    let url = directory.appendingPathComponent(newUrl)!
-                    delegate?.imageWasChanged(path: url.absoluteString, image: pickedImage)
-                } catch {
-                    print("Ошибка при попытке записи (\(error))")
-                }
-            }
+            guard (try? FileManager.default.url(for: .documentDirectory,
+                                                   in: .userDomainMask,
+                                                   appropriateFor: nil,
+                                                   create: false) as NSURL) != nil else { return }
+            
+            let uniqueIdentifier = UUID()
+            imageInteractionService?.saveImage(imageName: uniqueIdentifier.uuidString, image: pickedImage)
+            delegate?.imageWasChanged(imageName: uniqueIdentifier.uuidString)
+            
         } else {
-            print("Не удалось получить фото")
+            delegate?.imageLoadError()
         }
         
         picker.dismiss(animated: true)
@@ -100,11 +70,12 @@ extension ChangeImagePopupVC: UIImagePickerControllerDelegate, UINavigationContr
 //MARK: - Assembly
 extension ChangeImagePopupVC {
     
-    static func assemble(delegate: ChangeImagePopupDelegate) -> UIViewController {
+    static func assemble(delegate: ChangeImagePopupDelegate, imageInteractionService: ImageInteractionService?) -> UIViewController {
         
         guard let view = UIStoryboard(name: "ChangeImagePopupVC", bundle: nil).instantiateViewController(withIdentifier: "ChangeImagePopupVC") as? ChangeImagePopupVC else { return UIViewController() }
         
         view.delegate = delegate
+        view.imageInteractionService = imageInteractionService
         
         return view
     }

@@ -26,46 +26,55 @@ final class TasksServiceImp: TasksService {
     func save(object: Object, completion: @escaping (_ isSuccess: Bool) -> Void) {
         DispatchQueue.main.async {
             do {
-                try? self.realm.write {
+                try self.realm.write {
                     self.realm.add(object)
                     completion(true)
                 }
             } catch {
-                
+                completion(false)
             }
         }
     }
     
     func delete(object: Object, completion: @escaping (_ isSuccess: Bool) -> Void) {
         do {
-            try? realm.write {
+            try realm.write {
                 realm.delete(object)
                 completion(true)
             }
         } catch {
-            
+            completion(false)
         }
     }
     
     
     func update(object: TaskModel, title: String, description: String?, image: String?, completion: @escaping (_ isSuccess: Bool) -> Void) {
-        try? realm.write {
-            object.title = title
-            object.taskDescription = description ?? ""
-            object.image = image
-            completion(true)
+        do {
+            try realm.write {
+                object.title = title
+                object.taskDescription = description ?? ""
+                object.image = image
+                completion(true)
+            }
+        } catch {
+            completion(false)
         }
     }
     
     func updateCompletedTask(object: TaskModel, complitedDate: Date?, completion: @escaping (_ isSuccess: Bool) -> Void) {
-        try? realm.write {
-            object.isCompleted.toggle()
-            if let date = complitedDate {
-                object.completionDate = date
-            } else {
-                object.completionDate = nil
+        do {
+            try realm.write {
+                object.isCompleted.toggle()
+                if let date = complitedDate {
+                    object.completionDate = date
+                } else {
+                    object.completionDate = nil
+                }
+                completion(true)
             }
-            completion(true)
+        } catch {
+            completion(false)
         }
     }
 }
+

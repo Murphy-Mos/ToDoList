@@ -36,6 +36,6 @@ final class AuthVC: UIViewController {
 extension AuthVC: AuthViewInput {
     
     func showError() {
-        loginButton.setTitle("Данные неверны", for: .normal)
+        showOneActionAlert(title: "Ошибка", message: "Логин или пароль неверны", buttonText: "Ok")
     }
 }

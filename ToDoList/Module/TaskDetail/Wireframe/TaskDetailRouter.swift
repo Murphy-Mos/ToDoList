@@ -10,7 +10,7 @@ import FittedSheets //Обычно использую cocoaPods, но xCode 13 �
 
 protocol TaskDetailRouterInput {
     
-    func showChangePhotoPopup(delegate: ChangeImagePopupDelegate)
+    func showChangePhotoPopup(delegate: ChangeImagePopupDelegate, imageInteractionService: ImageInteractionService?)
 }
 
 final class TaskDetailRouter {
@@ -30,8 +30,8 @@ final class TaskDetailRouter {
 
 extension TaskDetailRouter: TaskDetailRouterInput {
     
-    func showChangePhotoPopup(delegate: ChangeImagePopupDelegate) {
-        let popUp = ChangeImagePopupVC.assemble(delegate: delegate)
+    func showChangePhotoPopup(delegate: ChangeImagePopupDelegate, imageInteractionService: ImageInteractionService?) {
+        let popUp = ChangeImagePopupVC.assemble(delegate: delegate, imageInteractionService: imageInteractionService)
         let sheetController = SheetViewController(controller: popUp, sizes: [.intrinsic], options: SheetOptions(useFullScreenMode: false, shrinkPresentingViewController: false))
         view.navigationController?.present(sheetController, animated: true)
     }

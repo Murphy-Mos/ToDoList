@@ -34,14 +34,16 @@ extension ToDoListInteractor: ToDoListInteractorInput {
         service.delete(object: task) { [weak self] isSuccess in
             if isSuccess {
                 self?.presenter?.didSuccessRemoveTask()
+            } else {
+                self?.presenter?.didFailureCallToService()
             }
         }
     }
     
     func changeTaskCompleted(task: TaskModel, complitedDate: Date?) {
         service.updateCompletedTask(object: task, complitedDate: complitedDate) { [weak self] isSuccess in
-            if isSuccess {
-//                self?.presenter?.didSuccessRemoveTask(index: index)
+            if !isSuccess {
+                self?.presenter?.didFailureCallToService()
             }
         }
     }

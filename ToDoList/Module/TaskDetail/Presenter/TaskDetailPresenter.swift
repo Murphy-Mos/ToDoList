@@ -9,15 +9,20 @@ import UIKit
 
 protocol TaskDetailViewOutput {
     func barButtonDidTap()
-    func saveButtonDidTap(taskInfo: TaskModel?, title: String, description: String?)
+    func saveButtonDidTap(title: String, description: String?)
+    func fetchTask() -> TaskModel?
+    func fetchTaskImage() -> UIImage?
 }
 
 protocol TaskDetailInteractorOutput: AnyObject {
     func didSuccessSaveTask()
+    func didFailureCallToService()
 }
 
 protocol ChangeImagePopupDelegate {
-    func imageWasChanged(path: String, image: UIImage)
+    func imageWasChanged(imageName: String)
+    func removeImage()
+    func imageLoadError()
 }
 
 final class TaskDetailPresenter {
@@ -28,8 +33,18 @@ final class TaskDetailPresenter {
     var router: TaskDetailRouterInput?
     var interactor: TaskDetailInteractorInput?
     
+    private let imageInteractionService: ImageInteractionService
+    private let task: TaskModel?
+    private let delegate: ToDoListDelegate
     private var imageUrl = ""
     
+    // MARK: - init
+
+    init(task: TaskModel?, imageInteractionService: ImageInteractionService, delegate: ToDoListDelegate) {
+        self.task = task
+        self.imageInteractionService = imageInteractionService
+        self.delegate = delegate
+    }
 }
 
 
@@ -37,13 +52,13 @@ final class TaskDetailPresenter {
 extension TaskDetailPresenter: TaskDetailViewOutput {
     
     func barButtonDidTap() {
-        router?.showChangePhotoPopup(delegate: self)
+        router?.showChangePhotoPopup(delegate: self, imageInteractionService: imageInteractionService)
     }
     
-    func saveButtonDidTap(taskInfo: TaskModel?, title: String, description: String?) {
-        if let existTask = taskInfo {
+    func saveButtonDidTap(title: String, description: String?) {
+        if let task = task {
             
-            interactor?.changeExistTask(task: existTask, title: title, description: description, image: nil)
+            interactor?.changeExistTask(task: task, title: title, description: description, image: imageUrl)
         } else {
             let date = Date()
             let dateFormatter = DateFormatter()
@@ -58,13 +73,24 @@ extension TaskDetailPresenter: TaskDetailViewOutput {
             interactor?.saveNewTask(task: task)
         }
     }
+    
+    func fetchTask() -> TaskModel? { return task }
+    
+    func fetchTaskImage() -> UIImage? {
+        return imageInteractionService.loadImageFromDiskWith(fileName: task?.image ?? "")
+    }
 }
 
 
 // MARK: - TaskDetailInteractorOutput
 extension TaskDetailPresenter: TaskDetailInteractorOutput {
     func didSuccessSaveTask() {
+        delegate.taskWasSave()
         view?.popToRootVC()
+    }
+    
+    func didFailureCallToService() {
+        view?.showError()
     }
 }
 
@@ -72,8 +98,18 @@ extension TaskDetailPresenter: TaskDetailInteractorOutput {
 // MARK: - ChangeImagePopupDelegate
 extension TaskDetailPresenter: ChangeImagePopupDelegate {
     
-    func imageWasChanged(path: String, image: UIImage) {
+    func imageWasChanged(imageName: String) {
+        let image = imageInteractionService.loadImageFromDiskWith(fileName: imageName) ?? UIImage()
         view?.setTaskImage(image: image)
-        imageUrl = path
+        imageUrl = imageName
+    }
+    
+    func removeImage() {
+        imageUrl = ""
+        view?.setTaskImage(image: nil)
+    }
+    
+    func imageLoadError() {
+        view?.showError()
     }
 }

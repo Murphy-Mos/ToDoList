@@ -55,7 +55,7 @@
                                                                     </userDefinedRuntimeAttribute>
                                                                 </userDefinedRuntimeAttributes>
                                                             </textField>
-                                                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" scrollEnabled="NO" text="Описание задачи" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="sr5-rc-siM">
+                                                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" scrollEnabled="NO" text="Описание задачи" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="sr5-rc-siM" customClass="TextViewPlaceHolder" customModule="ToDoList" customModuleProvider="target">
                                                                 <rect key="frame" x="0.0" y="56" width="256" height="40"/>
                                                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                                                 <constraints>
@@ -151,7 +151,7 @@
                     </navigationItem>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
                     <connections>
-                        <outlet property="taskDescriptionTextView" destination="sr5-rc-siM" id="Opb-No-PMP"/>
+                        <outlet property="taskDescriptionTextView" destination="sr5-rc-siM" id="gvH-xF-0BT"/>
                         <outlet property="taskImage" destination="VWX-Ih-IxQ" id="hZ8-t4-BRP"/>
                         <outlet property="taskTitleTextField" destination="3UB-Qc-dqT" id="blz-y2-DL5"/>
                     </connections>

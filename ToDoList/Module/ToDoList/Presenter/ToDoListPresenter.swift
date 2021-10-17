@@ -16,6 +16,11 @@ protocol ToDoListViewOutput {
 protocol ToDoListInteractorOutput: AnyObject {
     func didSuccessToObtainTasks(with model: [TaskModel])
     func didSuccessRemoveTask()
+    func didFailureCallToService()
+}
+
+protocol ToDoListDelegate {
+    func taskWasSave()
 }
 
 final class ToDoListPresenter {
@@ -25,29 +30,35 @@ final class ToDoListPresenter {
     weak var view: ToDoListViewInput?
     var interactor: ToDoListInteractorInput?
     var router: ToDoListRouterInput?
-    let dataConverter: ToDoListDataConverterInput
     
+    private let dataConverter: ToDoListDataConverterInput
+    private let imageInteractionService: ImageInteractionService
     private var taskList: [TaskModel]?
     
     // MARK: - init
 
-    init(dataConverter: ToDoListDataConverterInput) {
+    init(dataConverter: ToDoListDataConverterInput, imageInteractionService: ImageInteractionService) {
         self.dataConverter = dataConverter
+        self.imageInteractionService = imageInteractionService
     }
     
-    private func getNeededTask(section: Int, index: Int) -> TaskModel {
+    private func getNeededTask(isDeleteSelectedTask: Bool, section: Int, index: Int) -> TaskModel? {
         var notCompletedTask: [TaskModel] = []
         var completedTask: [TaskModel] = []
         
         taskList?.forEach({ $0.isCompleted ? completedTask.append($0) : notCompletedTask.append($0) })
-        let task: TaskModel
+        let task: TaskModel?
         switch section {
         case 0:
-            task = notCompletedTask[index]
-            notCompletedTask.remove(at: index)
+            task = notCompletedTask[safe: index] ?? nil
+            if isDeleteSelectedTask, notCompletedTask.count != 0 {
+                notCompletedTask.remove(at: index)
+            }
         default:
-            task = completedTask[index]
-            completedTask.remove(at: index)
+            task = completedTask[safe: index] ?? nil
+            if isDeleteSelectedTask, completedTask.count != 0 {
+                completedTask.remove(at: index)
+            }
         }
         
         taskList = notCompletedTask + completedTask
@@ -65,7 +76,7 @@ extension ToDoListPresenter: ToDoListViewOutput {
     }
     
     func newTaskDidTap() {
-        router?.openNewTask()
+        router?.openNewTask(delegate: self)
     }
 }
 
@@ -75,13 +86,13 @@ extension ToDoListPresenter: ToDoListTableViewManagerDelegate {
     
     func didSelect(section: Int, index: Int) {
         
-        let task = getNeededTask(section: section, index: index)
-        router?.openDetailTask(task: task)
+        guard let task = getNeededTask(isDeleteSelectedTask: false, section: section, index: index) else { return }
+        router?.openDetailTask(task: task, delegate: self)
     }
     
     func didRemove(section: Int, index: Int) {
         
-        let task = getNeededTask(section: section, index: index)
+        guard let task = getNeededTask(isDeleteSelectedTask: true, section: section, index: index) else { return }
         interactor?.removeTask(task: task)
     }
 }
@@ -92,17 +103,30 @@ extension ToDoListPresenter: ToDoListInteractorOutput {
     
     func didSuccessToObtainTasks(with model: [TaskModel]) {
         taskList = model
-        let viewModel = dataConverter.convert(tasks: model, delegate: self) { [weak self] newTaskList in
+        let viewModel = dataConverter.convert(tasks: model, delegate: self, imageInteractionService: imageInteractionService) { [weak self] newTaskList in
             self?.taskList = newTaskList
         }
         view?.updateView(with: viewModel)
     }
     
     func didSuccessRemoveTask() {
-        let viewModel = dataConverter.convert(tasks: taskList ?? [], delegate: self) { [weak self] newTaskList in
+        let viewModel = dataConverter.convert(tasks: taskList ?? [], delegate: self, imageInteractionService: imageInteractionService) { [weak self] newTaskList in
             self?.taskList = newTaskList
         }
         view?.updateView(with: viewModel)
+    }
+    
+    func didFailureCallToService() {
+        view?.showError()
+    }
+}
+
+
+// MARK: - ToDoListInteractorOutput
+extension ToDoListPresenter: ToDoListDelegate {
+    
+    func taskWasSave() {
+        view?.reloadScreen()
     }
 }
 
@@ -119,7 +143,7 @@ extension ToDoListPresenter: TaskCellDelegate {
             dateFormatter.dateFormat = "yyyy/MM/dd HH:mm:ss"
             
             interactor?.changeTaskCompleted(task: task, complitedDate: date)
-            let viewModel = dataConverter.convert(tasks: taskList ?? [], delegate: self) { [weak self] newTaskList in
+            let viewModel = dataConverter.convert(tasks: taskList ?? [], delegate: self, imageInteractionService: imageInteractionService) { [weak self] newTaskList in
                 self?.taskList = newTaskList
             }
             view?.updateView(with: viewModel)
@@ -127,7 +151,5 @@ extension ToDoListPresenter: TaskCellDelegate {
             interactor?.changeTaskCompleted(task: task, complitedDate: nil)
             interactor?.obtainTasks()
         }
-        
-
     }
 }

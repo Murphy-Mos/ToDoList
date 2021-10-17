@@ -42,6 +42,7 @@ extension TaskCell: Configurable {
     struct Model {
         var task: TaskModel
         var delegate: TaskCellDelegate
+        var imageInteractionService: ImageInteractionService
     }
     
     func configure(with model: Model) {
@@ -55,7 +56,7 @@ extension TaskCell: Configurable {
         
         titleLabel.text = model.task.title
         dateLabel.text = dateInStringFormat
-        taskImage.image =  UIImage(named: model.task.image ?? "")
+        taskImage.image = model.task.uiImage
         let checkImage = model.task.isCompleted ? UIImage(named: "ic_check") : UIImage(named: "ic_not_check")
         checkButton.setImage(checkImage, for: .normal)
     }

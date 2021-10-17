@@ -9,17 +9,17 @@ import UIKit
 
 final class TaskDetailAssembly {
     
-    static func assembleModule(task: TaskModel?) -> UIViewController {
+    static func assembleModule(task: TaskModel?, delegate: ToDoListDelegate) -> UIViewController {
         
         guard let view = UIStoryboard(name: "TaskDetailVC", bundle: nil).instantiateViewController(withIdentifier: "TaskDetailVC") as? TaskDetailVC else { return UIViewController() }
         
-        let presenter = TaskDetailPresenter()
         let router = TaskDetailRouter(view: view)
         let service = TasksServiceImp()
         let interactor = TaskDetailInteractor(service: service)
-
+        let imageInteractionService = ImageInteractionServiceImpl()
+        let presenter = TaskDetailPresenter(task: task, imageInteractionService: imageInteractionService, delegate: delegate)
+        
         view.presenter = presenter
-        view.taskInfo = task
         presenter.view = view
         presenter.router = router
         presenter.interactor = interactor

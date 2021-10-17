@@ -6,9 +6,10 @@
 //
 
 import Foundation
+import UIKit
 
 protocol ToDoListDataConverterInput {
-    func convert(tasks: [TaskModel], delegate: TaskCellDelegate, newTaskList: @escaping ([TaskModel]) -> Void) -> ToDoListViewModel
+    func convert(tasks: [TaskModel], delegate: TaskCellDelegate, imageInteractionService: ImageInteractionService, newTaskList: @escaping ([TaskModel]) -> Void) -> ToDoListViewModel
 }
 
 final class ToDoListDataConverter {  }
@@ -21,30 +22,46 @@ extension ToDoListDataConverter: ToDoListDataConverterInput {
     private typealias Section = ToDoListViewModel.Section
     private typealias TaskConfigurator = TableCellConfigurator<TaskCell, TaskCell.Model>
     
-    func convert(tasks: [TaskModel], delegate: TaskCellDelegate, newTaskList: @escaping ([TaskModel]) -> Void) -> ToDoListViewModel {
+    func convert(tasks: [TaskModel], delegate: TaskCellDelegate, imageInteractionService: ImageInteractionService, newTaskList: @escaping ([TaskModel]) -> Void) -> ToDoListViewModel {
                 
         var sections: [Section] = []
         
         var notCompletedTask: [TaskModel] = []
         var completedTask: [TaskModel] = []
         
-        tasks.forEach({ $0.isCompleted ? completedTask.append($0) : notCompletedTask.append($0) })
+        tasks.forEach { task in
+            
+            task.isCompleted ? completedTask.append(task) : notCompletedTask.append(task)
+            
+            var image: UIImage? {
+                didSet {
+                    task.uiImage = image
+                }
+            }
+            
+            let imagePath = task.image
+            
+            DispatchQueue.global().async {
+                image = imageInteractionService.loadImageFromDiskWith(fileName: imagePath ?? "") ?? UIImage()
+            }
+        }
+        
         completedTask = completedTask.sorted(by: {
             $0.completionDate?.compare($1.completionDate!) == .orderedAscending
         })
         
         newTaskList(notCompletedTask + completedTask)
         
-        let newTasks = newTaskSection(tasks: notCompletedTask, delegate: delegate)
+        let newTasks = newTaskSection(tasks: notCompletedTask, delegate: delegate, imageInteractionService: imageInteractionService)
         sections.append(newTasks)
         
-        let completedTasks = completedTaskSection(tasks: completedTask, delegate: delegate)
+        let completedTasks = completedTaskSection(tasks: completedTask, delegate: delegate, imageInteractionService: imageInteractionService)
         sections.append(completedTasks)
 
         return ToDoListViewModel(sections: sections)
     }
     
-    private func newTaskSection(tasks: [TaskModel], delegate: TaskCellDelegate) -> Section {
+    private func newTaskSection(tasks: [TaskModel], delegate: TaskCellDelegate, imageInteractionService: ImageInteractionService) -> Section {
         
         var rows: [Row] = []
         
@@ -55,7 +72,7 @@ extension ToDoListDataConverter: ToDoListDataConverterInput {
         
         tasks.forEach { task in
             
-            let taskModel = TaskCell.Model(task: task, delegate: delegate)
+            let taskModel = TaskCell.Model(task: task, delegate: delegate, imageInteractionService: imageInteractionService)
             let taskConfigurator = TaskConfigurator(item: taskModel)
             rows.append(Row(configurator: taskConfigurator))
         }
@@ -64,7 +81,7 @@ extension ToDoListDataConverter: ToDoListDataConverterInput {
                        rows: rows)
     }
     
-    private func completedTaskSection(tasks: [TaskModel], delegate: TaskCellDelegate) -> Section {
+    private func completedTaskSection(tasks: [TaskModel], delegate: TaskCellDelegate, imageInteractionService: ImageInteractionService) -> Section {
         
         var rows: [Row] = []
         
@@ -75,7 +92,7 @@ extension ToDoListDataConverter: ToDoListDataConverterInput {
         
         tasks.forEach { task in
             
-            let taskModel = TaskCell.Model(task: task, delegate: delegate)
+            let taskModel = TaskCell.Model(task: task, delegate: delegate, imageInteractionService: imageInteractionService)
             let taskConfigurator = TaskConfigurator(item: taskModel)
             rows.append(Row(configurator: taskConfigurator))
         }

@@ -15,10 +15,11 @@ final class ToDoListAssembly {
         
         let dataConverter = ToDoListDataConverter()
         let tableViewManager = ToDoListTableViewManager()
-        let presenter = ToDoListPresenter(dataConverter: dataConverter)
         let router = ToDoListRouter(view: view)
         let service = TasksServiceImp()
         let interactor = ToDoListInteractor(service: service)
+        let imageInteractionService = ImageInteractionServiceImpl()
+        let presenter = ToDoListPresenter(dataConverter: dataConverter, imageInteractionService: imageInteractionService)
         
         view.presenter = presenter
         view.tableViewManager = tableViewManager
